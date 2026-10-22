@@ -1,0 +1,95 @@
+# NOTICE
+
+## 这个仓库是什么关系
+
+**本仓库不包含 MaiBot 框架本体，只是它的一个定制层。**
+
+| | |
+| --- | --- |
+| 上游框架 | [Mai-with-u/MaiBot](https://github.com/Mai-with-u/MaiBot) |
+| 框架许可 | GPL-3.0 + [MaiBot EULA](https://github.com/Mai-with-u/MaiBot/blob/main/EULA.md) |
+| 本仓库内容 | 人设、行为调校文档、运维脚本、故障复盘 |
+| 本仓库许可 | 见下 §许可 |
+
+装的时候必须先按上游文档装好 MaiBot，再把这层改造叠上去。**不能单独运行。**
+
+---
+
+## 为什么单独拆出来
+
+原因有两个：
+
+1. **框架很大**（1800+ 文件、13MB git 历史），整包 fork 再发布对使用者没好处 ——
+   他们需要的是「改哪里」，不是「第 1862 个文件长什么样」
+2. **改动是行为层的**：门控判据、prompt、回复后处理、插件回执措辞。
+   这些是**文档密集型**的知识，代码 diff 反而看不清
+
+所以这个仓库的形态是：**文档为主 + 少量脚本 + 一份改动清单**。
+
+---
+
+## 关于文档里的真实数据
+
+这些复盘来自一个真实运行的群，所以原始版本里有：
+
+- 群号、几个 QQ 号
+- 带签名的 CDN 图片链接
+- 一个自建心跳服务地址
+
+**导出时已全部替换成占位符**，脚本在 [`ops/redact_docs.py`](ops/redact_docs.py)，
+替换规则：
+
+| 原文 | 占位符 |
+| --- | --- |
+| 群号 | `GROUP_ID` |
+| 小号 QQ | `BOT_QQ` |
+| 另一个机器人 QQ | `BOT_B_QQ` |
+| 群友 QQ | `USER_A_QQ` / `USER_B_QQ` |
+| 心跳服务 | `HEARTBEAT_HOST` |
+| CDN 链接 | `CDN_URL` |
+
+**人名（Tutu / 过客 / 果壳…）保留未替换** —— 文档里到处都是，替换掉会读不懂，
+而单纯昵称不构成隐私风险。如果你要复用这些文档，建议自己再改一遍人名。
+
+---
+
+## 许可
+
+### 文档部分（`docs/`、`persona/`、本文件、README）
+
+采用 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)
+（署名 — 非商业性使用 — 相同方式共享）。
+
+原因：文档里是**踩坑经验**，希望它被传播、被指出错误、被别人补充，
+但不想被拿去包装成付费课程。
+
+### 脚本部分（`ops/`）
+
+采用 [MIT](https://opensource.org/licenses/MIT)。脚本是工具，越少限制越好用。
+
+### 人设原型
+
+`persona/persona_dafeiyu.md` 的原始提示词来自
+**玖帕喵市场 #726《DeepSeek娘》**（作者 misaka16180），属于用户创作内容（UGC）。
+
+原版是给 dsh agent preset 用的 YAML（带 `qq_*` / `wx_*` 等工具声明），
+而 MaiBot 没有这些工具，所以拆成了它需要的三个字段（`personality` /
+`behavior_style` / `reply_style`）。**拆法和被删掉的部分**都记录在那个文件里。
+
+### 代码改动清单
+
+`patches/MAIBOT_PATCHES.md` 描述的是对 MaiBot 源码的修改。
+**这些修改本身受上游 GPL-3.0 约束** —— 如果你把改动合进 MaiBot 再分发，
+需要遵守 GPL-3.0。
+
+---
+
+## 致谢
+
+- [Mai-with-u/MaiBot](https://github.com/Mai-with-u/MaiBot) —— 框架
+- misaka16180 —— 人设原型《DeepSeek娘》
+- [Speak or Stay Silent (arXiv:2603.11409)](https://arxiv.org/html/2603.11409v1) ——
+  「轮次感知不是涌现能力，必须显式训练」这个结论直接催生了激活门控
+- [dsh-auto-memory](https://github.com/Aik358/dsh-auto-memory) ——
+  「语义相似 ≠ 该不该回」这个洞见
+- [dsh-speak-up](https://github.com/Yuuyuko-uu/dsh-speak-up) —— 时机因子的参照（方向相反）

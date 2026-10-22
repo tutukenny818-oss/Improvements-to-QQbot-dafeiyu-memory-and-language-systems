@@ -1,0 +1,38 @@
+# .gitignore
+
+# 本地配置（含真实 key / 账号）
+bot_config.toml
+model_config.toml
+adapter_policy.toml
+.env
+.env.*
+data/
+config/old/
+
+# 备份文件
+*.bak_*
+*.bak
+*.orig
+*.rej
+
+# 运行产物
+logs/
+temp/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 导出中间产物
+*.patch
+!patches/*.md
+
+# 本地脱敏规则（含真实号码）
+ops/redact_rules.local.txt
