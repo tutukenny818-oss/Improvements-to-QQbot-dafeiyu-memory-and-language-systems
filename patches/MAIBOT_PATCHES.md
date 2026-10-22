@@ -11,12 +11,12 @@
 
 | 文件 | 作用 | 对应文档 |
 | --- | --- | --- |
-| `src/maisaka/turn_trigger/activation_gate.py` | **激活门控**：四分类判定该不该说话 | [第205轮](../docs/第205轮-门控验证与三层预算.md) |
-| `src/maisaka/planner_reply_guard.py` | 判断 Planner「想回但没调工具」 | [第207轮](../docs/第207轮-没回应根因.md) |
-| `src/maisaka/utils/timing_factor.py` | 主动玩游戏的时机因子（热群提前、冷群不推迟） | [第206轮](../docs/第206轮-时机因子.md) |
-| `src/maisaka/utils/capability_bridge.py` | 把难题外包给更强模型的桥 | [第204轮](../docs/第204轮-DSH桥接决策.md) |
+| `src/maisaka/turn_trigger/activation_gate.py` | **激活门控**：四分类判定该不该说话 | [第205轮](../01-对话系统/01-门控四分类.md) |
+| `src/maisaka/planner_reply_guard.py` | 判断 Planner「想回但没调工具」 | [第207轮](../01-对话系统/02-想回却没调工具.md) |
+| `src/maisaka/utils/timing_factor.py` | 主动玩游戏的时机因子（热群提前、冷群不推迟） | [第206轮](../01-对话系统/08-时机因子.md) |
+| `src/maisaka/utils/capability_bridge.py` | 把难题外包给更强模型的桥 | 第204轮（DSH 桥接，本文档未收录） |
 | `src/maisaka/builtin_tool/think_hard.py` | 上面那座桥的工具封装 | 同上 |
-| `src/maisaka/builtin_tool/ask_term.py` | **不懂就问**：遇到生词直接问群里，答复进黑话库 | [第219轮](../docs/第219轮-不懂就问与引用归属.md) |
+| `src/maisaka/builtin_tool/ask_term.py` | **不懂就问**：遇到生词直接问群里，答复进黑话库 | [第219轮](../01-对话系统/09-不懂就问.md) |
 | `src/services/self_identity.py` | 自身身份判定（区分「谁是我」） | — |
 | `src/services/non_friend_guard.py` | 非好友消息守卫 | — |
 | `src/A_memorix/core/utils/stale_claims.py` | 已被推翻说法的标注（检索时提示模型别采信） | 记忆系统演进 §189 |
@@ -34,27 +34,27 @@
 | 改动 | 原因 | 文档 |
 | --- | --- | --- |
 | 开头调用 `_check_activation_gate()` | 发消息前的最后一道闸 | 第205轮 |
-| 新增 `_is_media_placeholder_text()` | 表情包占位文本不能当语义依据 | [第209轮](../docs/第209轮-门控拦错对象.md) |
+| 新增 `_is_media_placeholder_text()` | 表情包占位文本不能当语义依据 | [第209轮](../01-对话系统/04-门控判错对象.md) |
 | 门控按 `msg_id` 定位**被回复的那条** | 原来只看缓存最新一条，会判错对象 | 同上 |
 | 窗口从 6 扩到 8 条 | 容得下「文字+图+文字+图」连发 | 同上 |
-| 新增 `_resolve_quoted_target()` | 有人引用 bot 的话 → 放行；引用别人 → 留痕 | [第219轮](../docs/第219轮-不懂就问与引用归属.md) |
-| 新增 `_looks_like_question()` + `_note_ask_if_question()` | 发出去的是问句就登记，等对方回应 | [第215轮](../docs/第215轮-问完没人回该不该催.md) |
-| `_CONVERSATION_LOOKBACK = 3` | 「它刚说过话」的回看深度，原来只看 1 条 | [第220轮](../docs/第220轮-贴表情当成回应.md) |
+| 新增 `_resolve_quoted_target()` | 有人引用 bot 的话 → 放行；引用别人 → 留痕 | [第219轮](../01-对话系统/09-不懂就问.md) |
+| 新增 `_looks_like_question()` + `_note_ask_if_question()` | 发出去的是问句就登记，等对方回应 | [第215轮](../01-对话系统/13-问完没人回要催.md) |
+| `_CONVERSATION_LOOKBACK = 3` | 「它刚说过话」的回看深度，原来只看 1 条 | [第220轮](../01-对话系统/06-贴表情当成回应.md) |
 
 ### 2.2 `src/maisaka/runtime.py` —— 调度与状态
 
 | 改动 | 原因 | 文档 |
 | --- | --- | --- |
-| 新增 `IDLE_COMPENSATION_MAX_AVERAGE_INTERVAL_SECONDS = 120` | **平均消息间隔没有上限**，冷群一次算出等 67 分钟 | [第217轮](../docs/第217轮-点名没反应与间隔无上限.md) |
-| `IDLE_COMPENSATION_MIN_AVERAGE_INTERVAL_SECONDS` 30 → 15 | 单条消息必等 30 秒，改 15 后约 28 秒出回复 | [第210轮](../docs/第210轮-等待时长与空窗补偿.md) |
-| 新增待回应问句追踪（4 个字段 + 3 个方法） | 问完人没回，120 秒后唤醒一轮催一句，只催一次 | [第215轮](../docs/第215轮-问完没人回该不该催.md) |
-| `_update_message_trigger_state` 补 `mentioned` 分支 | 被叫名字要走强制触发，不能等阈值 | [第217轮](../docs/第217轮-点名没反应与间隔无上限.md) |
+| 新增 `IDLE_COMPENSATION_MAX_AVERAGE_INTERVAL_SECONDS = 120` | **平均消息间隔没有上限**，冷群一次算出等 67 分钟 | [第217轮](../01-对话系统/05-延迟67分钟.md) |
+| `IDLE_COMPENSATION_MIN_AVERAGE_INTERVAL_SECONDS` 30 → 15 | 单条消息必等 30 秒，改 15 后约 28 秒出回复 | [第210轮](../01-对话系统/12-空窗补偿.md) |
+| 新增待回应问句追踪（4 个字段 + 3 个方法） | 问完人没回，120 秒后唤醒一轮催一句，只催一次 | [第215轮](../01-对话系统/13-问完没人回要催.md) |
+| `_update_message_trigger_state` 补 `mentioned` 分支 | 被叫名字要走强制触发，不能等阈值 | [第217轮](../01-对话系统/05-延迟67分钟.md) |
 
 ### 2.3 `src/chat/utils/utils.py` —— 分条与指令保护
 
 | 改动 | 原因 | 文档 |
 | --- | --- | --- |
-| 新增 `_split_by_newline_segments()` | **只按模型自己写的换行分条**，确定性，不概率切 | [第212轮](../docs/第212轮-只会回一句与只在一个群.md) |
+| 新增 `_split_by_newline_segments()` | **只按模型自己写的换行分条**，确定性，不概率切 | [第212轮](../01-对话系统/07-分条与指令保护.md) |
 | 新增 `_is_at_command_text()` / `_is_bare_at()` | `@果壳 /井字棋 5` 绝不能被拆开 | 同上 |
 | `_apply_response_post_processing` 跳过含指令的句子 | 错别字注入会把 `/井字棋` 改成 `/井字琪`，指令失效 | 同上 |
 
@@ -62,7 +62,7 @@
 
 | 改动 | 原因 | 文档 |
 | --- | --- | --- |
-| `_handle_planner_no_tool_retry()` 走守卫判断 | Planner 正文写「回一句就好」却不调工具 → 消息丢失 | [第207轮](../docs/第207轮-没回应根因.md) |
+| `_handle_planner_no_tool_retry()` 走守卫判断 | Planner 正文写「回一句就好」却不调工具 → 消息丢失 | [第207轮](../01-对话系统/02-想回却没调工具.md) |
 
 ### 2.5 配置项（`config/official_configs.py` + `bot_config.toml`）
 
@@ -92,8 +92,8 @@
 
 | 插件 | 改动 | 文档 |
 | --- | --- | --- |
-| `plugins/guoke-player/plugin.py` | 玩完要说两句；清掉 6 类劝阻文案；proactive 120→45 分钟、daily_limit 4→0 | [第213-214轮](../docs/第213-214轮-玩完不说话与限制文案.md) |
-| `plugins/human-life/plugin.py` | `human_touch` 描述 + react 回执强调「贴表情 ≠ 说话」 | [第220轮](../docs/第220轮-贴表情当成回应.md) |
+| `plugins/guoke-player/plugin.py` | 玩完要说两句；清掉 6 类劝阻文案；proactive 120→45 分钟、daily_limit 4→0 | [第213-214轮](../01-对话系统/15-玩完要说话.md) |
+| `plugins/human-life/plugin.py` | `human_touch` 描述 + react 回执强调「贴表情 ≠ 说话」 | [第220轮](../01-对话系统/06-贴表情当成回应.md) |
 | `plugins/bili-scout/plugin.py` | 去掉「一天不要超过几次」 | 第216轮 |
 
 ---

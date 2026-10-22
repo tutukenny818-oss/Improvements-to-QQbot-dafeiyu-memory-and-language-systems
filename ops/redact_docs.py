@@ -25,8 +25,10 @@ import re
 import sys
 from pathlib import Path
 
-DOCS = Path(r"D:\dafeiyu\docs")
-RULES_FILE = Path(r"D:\dafeiyu\ops\redact_rules.local.txt")
+# ★ 扫描整个仓库（原来只扫 docs/，目录重组后 docs/ 已不存在）
+ROOT = Path(r"D:\dafeiyu")
+RULES_FILE = ROOT / "ops" / "redact_rules.local.txt"
+SKIP_PARTS = {".git", "__pycache__", ".venv"}
 
 # 通用替换：不涉及任何私人号码，可以直接写在这里
 GENERIC_RULES: list[tuple[str, str]] = [
@@ -59,9 +61,27 @@ def load_rules() -> list[tuple[str, str]]:
     return rules
 
 
+def iter_text_files() -> list[Path]:
+    """仓库里所有要脱敏的文本文件（排除 .git / 规则文件本身）。"""
+
+    out: list[Path] = []
+    for path in sorted(ROOT.rglob("*")):
+        if not path.is_file():
+            continue
+        if any(part in SKIP_PARTS for part in path.parts):
+            continue
+        # 规则文件本身含真实号码，跳过（它已被 .gitignore 排除）
+        if path.name == RULES_FILE.name:
+            continue
+        if path.suffix.lower() not in {".md", ".py", ".txt", ".toml", ".json", ".yaml", ".yml"}:
+            continue
+        out.append(path)
+    return out
+
+
 def main() -> int:
-    if not DOCS.is_dir():
-        print(f"[X] 找不到目录: {DOCS}")
+    if not ROOT.is_dir():
+        print(f"[X] 找不到目录: {ROOT}")
         return 1
 
     rules = load_rules()
@@ -69,11 +89,17 @@ def main() -> int:
         print("[X] 没有任何替换规则，中止")
         return 1
 
+    files = iter_text_files()
+    print(f"[v] 待扫描 {len(files)} 个文本文件\n")
+
     total_hits = 0
     touched_files = 0
 
-    for path in sorted(DOCS.glob("*.md")):
-        text = path.read_text(encoding="utf-8")
+    for path in files:
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
         original = text
         file_hits = 0
         for pattern, replacement in rules:
@@ -83,22 +109,24 @@ def main() -> int:
             path.write_text(text, encoding="utf-8")
             touched_files += 1
             total_hits += file_hits
-            print(f"  {path.name}: {file_hits} 处")
+            print(f"  {path.relative_to(ROOT)}: {file_hits} 处")
 
     print(f"\n合计 {total_hits} 处，影响 {touched_files} 个文件")
 
-    # 复查：用规则的原始正则去搜，看还有没有漏网
+    # 复查：只查「纯数字」规则（具体号码），避免占位符自匹配
     print("\n复查残留：")
     leftovers = 0
     for pattern, _replacement in rules:
-        # 只查「看起来像具体号码」的规则（纯数字），避免占位符自匹配
         if not re.fullmatch(r"\d+", pattern):
             continue
-        for path in sorted(DOCS.glob("*.md")):
-            text = path.read_text(encoding="utf-8")
+        for path in files:
+            try:
+                text = path.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                continue
             for match in re.finditer(pattern, text):
                 leftovers += 1
-                print(f"  [!] {path.name}: {match.group(0)}")
+                print(f"  [!] {path.relative_to(ROOT)}: {match.group(0)}")
     print(f"残留 {leftovers} 处" if leftovers else "  （无残留）")
     return 0 if leftovers == 0 else 2
 
