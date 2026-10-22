@@ -30,11 +30,15 @@ ROOT = Path(r"D:\dafeiyu")
 RULES_FILE = ROOT / "ops" / "redact_rules.local.txt"
 SKIP_PARTS = {".git", "__pycache__", ".venv"}
 
-# 通用替换：不涉及任何私人号码，可以直接写在这里
+# 通用替换：只处理「结构」，不涉及任何具体号码。
+#
+# ⚠️ 这里**不写死任何域名**。写死等于把「原来是什么服务」也公布出去了，
+#    而规则文件本来就可以放任何东西。所有具体域名/号码都放
+#    `redact_rules.local.txt`（已被 .gitignore 排除）。
 GENERIC_RULES: list[tuple[str, str]] = [
-    (r"hyybuth\.xyz(?::\d+)?", "HEARTBEAT_HOST"),
-    (r"https?://qqbot\.ugcimg\.cn/[^\s)\"']+", "CDN_URL"),
-    (r"https?://multimedia\.nt\.qq\.com\.cn/[^\s)\"']+", "CDN_URL"),
+    # QQ 多媒体 CDN 的签名链接：特征很稳定，可以泛化
+    (r"https?://[a-z0-9.-]*ugcimg\.[a-z.]+/[^\s)\"']+", "CDN_URL"),
+    (r"https?://multimedia\.[a-z0-9.-]*qq\.[a-z.]+/[^\s)\"']+", "CDN_URL"),
 ]
 
 
